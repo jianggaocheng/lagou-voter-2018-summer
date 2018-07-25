@@ -1,0 +1,10 @@
+{
+  "name": "lagou-voter",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "wda": "^1.0.0",
+    "wda-driver": "^1.0.2"
+  }
+}
