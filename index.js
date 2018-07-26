@@ -1,12 +1,9 @@
-const wda = require("wda");
 const wdaDriver = require('wda-driver');
-const Jimp = require("jimp");
 const async = require("async");
 
 /**
  * 参数配置部分
  */
-
 
 // 手机IP地址
 const wdaServerURL = 'http://192.168.123.56:8100';
@@ -35,7 +32,7 @@ const positon = {
 }
 
 // 按钮点击间隔
-const SLEEP = 800;
+const SLEEP = 200;
 
 
 /**
@@ -43,6 +40,8 @@ const SLEEP = 800;
  */
 
 const client = new wdaDriver.Client(wdaServerURL);
+
+let n = 1;
 
 async function play() {
   let session = await client.session();
@@ -70,6 +69,8 @@ async function play() {
 
   // 暂停等待UI
   await sleep(SLEEP);
+
+  console.log(`第${n++} 轮分享完成`);
 };
 
 const sleep = async function (ms) {
@@ -80,5 +81,5 @@ const sleep = async function (ms) {
   });
 }
 
-async.forever(play);
+async.forever(play, (e) => console.error('程序出错，请重新运行', e));
 // play();

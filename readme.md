@@ -14,5 +14,6 @@
 #### 运行步骤
 - 运行安装好的 WebDriveAgent
 - 将手机页面切换到投票页面 
+- 修改 ``` wdaServerURL ``` 为手机的地址
 - 运行脚本 ``` node index.js ```
 
