@@ -1,85 +1,80 @@
 const wdaDriver = require('wda-driver');
 const async = require("async");
 
-/**
- * 参数配置部分
- */
-
 // 手机IP地址
-const wdaServerURL = 'http://192.168.123.56:8100';
-
-// iphone 6sp/7p/8p
-const positon = {
-  menuPos: {
-    x: 360,
-    y: 30,
-  },
-
-  shareButton: {
-    x: 42,
-    y: 481,
-  },
-
-  fileHelper: {
-    x: 170,
-    y: 226
-  },
-
-  confirmShare: {
-    x: 286,
-    y: 480
-  },
-}
+const wdaServerURL = 'http://192.168.2.2:8100';
 
 // 按钮点击间隔
-const SLEEP = 200;
-
-
-/**
- * 循环点击各个按钮，进行分享
- */
+const SLEEP = 100;
 
 const client = new wdaDriver.Client(wdaServerURL);
 
-let n = 1;
+// 缓存按键位置，减少查询element时间开销
+const positionMap = {};
 
-async function play() {
+(async () => {
   let session = await client.session();
 
-  // 点击菜单按钮
-  await session.tap(positon.menuPos.x, positon.menuPos.y);
+  let n = 1;
 
-  // 暂停等待UI
-  await sleep(SLEEP);
+  // 切换为竖屏
+  await session.orientation('PORTRAIT')
 
-  // 点击分享按钮
-  await session.tap(positon.shareButton.x, positon.shareButton.y);
+  // 循环脚本，点击各个按钮
+  async function play() {
+    await clickElementByName(session, '更多', 'more');
+    await sleep(SLEEP);
 
-  // 暂停等待UI
-  await sleep(SLEEP);
+    await clickElementByName(session, '发送给朋友', 'share');
+    await sleep(SLEEP);
 
-  // 选择分享联系人第一位（文件传输助手）
-  await session.tap(positon.fileHelper.x, positon.fileHelper.y);
+    await clickElementByName(session, '文件传输助手', 'file');
+    await sleep(SLEEP);
 
-  // 暂停等待UI
-  await sleep(SLEEP);
+    await clickElementByName(session, '发送', 'send');
+    await sleep(SLEEP);
 
-  // 点击确定分享
-  await session.tap(positon.confirmShare.x, positon.confirmShare.y);
+    console.log(`第 ${n++} 轮分享完成`);
+  };
 
-  // 暂停等待UI
-  await sleep(SLEEP);
+  /**
+   * 暂停等待UI响应
+   * @param {*} ms 毫秒数
+   */
+  const sleep = async (ms) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve();
+      }, ms);
+    });
+  }
 
-  console.log(`第${n++} 轮分享完成`);
-};
+  /**
+   * 查找element并模拟点击
+   * @param {*} session wda session
+   * @param {*} name elememt的name
+   * @param {*} key 缓存key
+   */
+  const clickElementByName = async (session, name, key = '') => {
+    let rect = {};
 
-const sleep = async function (ms) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve();
-    }, ms);
-  });
-}
+    // 优先从缓存中查找，避免重复搜索element
+    if (key && positionMap[key]) {
+      rect = positionMap[key];
+    } else {
+      let element = await session.selector({ name: name }).get();
+      rect = await element.getBounds();
+      positionMap[key] = rect;
+    }
 
-async.forever(play, (e) => console.error('程序出错，请重新运行', e));
-// play();
+    let clickX = rect.x + parseInt(Math.random() * rect.width * 0.8);
+    let clickY = rect.y + parseInt(Math.random() * rect.height * 0.5);
+
+    console.log(`Tap ${name}  [ ${clickX}, ${clickY} ]`);
+
+    return await session.tap(clickX, clickY);
+  }
+
+  async.forever(play, (e) => console.error('程序出错，请重新运行', e));
+  // play();
+})();
